@@ -1,0 +1,23 @@
+# Entornos virtuales (Evita subir gigas de librerías instaladas)
+.venv/
+venv/
+env/
+ENV/
+
+# Caché de Python (Archivos temporales de ejecución)
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Configuración local de Streamlit y credenciales
+.streamlit/config.toml
+.streamlit/secrets.toml
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Datos o variables de entorno locales
+.env
+*.log

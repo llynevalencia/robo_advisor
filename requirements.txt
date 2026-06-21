@@ -1,0 +1,7 @@
+streamlit
+plotly
+pandas
+numpy
+yfinance
+Riskfolio-Lib
+scikit-learn
