@@ -21,3 +21,6 @@ Thumbs.db
 # Datos o variables de entorno locales
 .env
 *.log
+
+# Test
+test_data.py
