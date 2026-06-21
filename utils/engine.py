@@ -199,3 +199,20 @@ def run_monte_carlo_simulation(weights, returns, num_simulations=100, time_horiz
         simulation_df[f'Sim_{x}'] = camino_precios
         
     return simulation_df
+
+def optimize_hrp(returns):
+    """
+    Utiliza Riskfolio-Lib para calcular los pesos óptimos usando
+    el algoritmo avanzado de Paridad de Riesgo Jerárquica (HRP).
+    HRP utiliza clustering jerárquico para distribuir el riesgo de forma óptima.
+    """
+    # 1. Instanciar el objeto de Cartera de Clustering Jerárquico
+    port = rp.HCPortfolio(returns=returns)
+    
+    # 2. Ejecutar la optimización avanzada
+    # model='HRP' -> Hierarchical Risk Parity
+    # rm='MV' -> Usamos la varianza estándar para medir el riesgo de los clusters
+    # linkage='ward' -> Método de enlace robusto para el clustering jerárquico
+    weights = port.optimization(model='HRP', rm='MV', rf=0, linkage='ward', max_k=10, leaf_order=True)
+    
+    return weights
