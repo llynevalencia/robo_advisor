@@ -3,13 +3,29 @@ import pandas as pd
 import numpy as np
 import riskfolio as rp
 
-# 1. Definición del Universo de Activos
-# Seleccionamos ETFs representativos y criptos para tener liquidez y datos fiables
+
+# Definición del Universo de Activos
+# Acotado estrictamente a ETFs macroeconómicos y Criptomonedas de alta capitalización
 ASSET_UNIVERSE = {
-    "Renta Variable": ["SPY", "URTH"],  # S&P 500 y MSCI World
-    "Renta Fija": ["AGG", "TLT"],       # Bonos Globales y Bonos del Tesoro EE.UU. a +20 años
-    "Materias Primas": ["GLD", "SLV"],  # Oro y Plata
-    "Criptomonedas": ["BTC-USD", "ETH-USD"] # Bitcoin y Ethereum
+    "Renta Variable": [
+        "SPY",   # S&P 500 (EE.UU.)
+        "VGK",   # Vanguard FTSE Europe (Europa)
+        "VWO"    # Vanguard Emerging Markets (Mercados Emergentes)
+    ],
+    "Renta Fija": [
+        "AGG",   # Core US Aggregate Bond (Bonos globales seguros)
+        "TLT",   # iShares 20+ Year Treasury (Bonos del tesoro EE.UU.)
+        "EMB"    # J.P. Morgan USD Emerging Markets Bond (Bonos emergentes)
+    ],
+    "Materias Primas": [
+        "GLD",   # SPDR Gold Trust (Oro físico)
+        "SLV",   # iShares Silver Trust (Plata)
+        "PDBC"   # Cesta diversificada de materias primas
+    ],
+    "Criptomonedas": [
+        "BTC-USD", # Bitcoin
+        "ETH-USD"  # Ethereum
+    ]
 }
 
 def get_all_tickers():
@@ -201,11 +217,10 @@ def run_monte_carlo_simulation(weights, returns, num_simulations=100, time_horiz
     return simulation_df
 
 def optimize_hrp(returns):
-    """
-    Utiliza Riskfolio-Lib para calcular los pesos óptimos usando
-    el algoritmo avanzado de Paridad de Riesgo Jerárquica (HRP).
-    HRP utiliza clustering jerárquico para distribuir el riesgo de forma óptima.
-    """
+    
+    #Calcular los pesos óptimos usando el algoritmo avanzado de Paridad de Riesgo Jerárquica (HRP).
+    #HRP utiliza clustering jerárquico para distribuir el riesgo de forma óptima.
+    
     # 1. Instanciar el objeto de Cartera de Clustering Jerárquico
     port = rp.HCPortfolio(returns=returns)
     
