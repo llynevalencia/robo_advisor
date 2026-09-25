@@ -235,58 +235,55 @@ def optimize_hrp(returns):
 def calculate_advanced_metrics(portfolio_returns, benchmark_returns, risk_free_rate=0.0):
     """
     Calcula las métricas avanzadas de Riesgo, Rendimiento y Ajustadas al Riesgo.
-    portfolio_returns: pd.Series con los retornos diarios históricos de la cartera.
-    benchmark_returns: pd.Series con los retornos diarios del índice de referencia (ej. SPY).
+    Incluye alineación de dimensiones para evitar errores de np.cov.
     """
 
-    # 1. MÉTRICAS DE RIESGO
+    # Convertimos a 1D (Series) si es un DataFrame de 1 columna
+    if isinstance(benchmark_returns, pd.DataFrame):
+        benchmark_returns = benchmark_returns.squeeze()
+        
+    # Sincronizamos las fechas exactas mediante un 'inner join'
+    aligned_data = pd.concat([portfolio_returns, benchmark_returns], axis=1, join='inner').dropna()
+    port_ret = aligned_data.iloc[:, 0]
+    bench_ret = aligned_data.iloc[:, 1]
 
-    # Value at Risk (VaR) al 95% de confianza (diario)
-    var_95 = np.percentile(portfolio_returns, 5)
+    # MÉTRICAS DE RIESGO
+
+    var_95 = np.percentile(port_ret, 5)
     
-    # Maximum Drawdown (MDD)
-    cumulative_returns = (1 + portfolio_returns).cumprod()
+    cumulative_returns = (1 + port_ret).cumprod()
     running_max = cumulative_returns.cummax()
     drawdown = (cumulative_returns / running_max) - 1
     mdd = drawdown.min()
     
-    # Periodo de recuperación (Recovery Period en días)
-    # Días desde que ocurrió el MDD hasta que el Drawdown volvió a 0
     end_mdd_idx = drawdown.idxmin()
     recovery_data = drawdown.loc[end_mdd_idx:]
-    recovery_days = (recovery_data == 0).argmax() if (recovery_data == 0).any() else "No recuperado"
+    recovery_days = int((recovery_data == 0).argmax()) if (recovery_data == 0).any() else "No recuperado"
 
-    # 2. MÉTRICAS DE RENDIMIENTO
+    # MÉTRICAS DE RENDIMIENTO
 
-    # Time-Weighted Return (TWR): Equivalente al retorno acumulado sin flujos de caja
     twr = cumulative_returns.iloc[-1] - 1
     
-    # Rentabilidades anualizadas
-    port_annual_return = portfolio_returns.mean() * 252
-    bench_annual_return = benchmark_returns.mean() * 252 #
+    port_annual_return = port_ret.mean() * 252
+    bench_annual_return = bench_ret.mean() * 252
     
-    # Retorno Activo frente al Benchmark
     active_return = port_annual_return - bench_annual_return
     
-    # Tracking Error (Volatilidad de la diferencia de retornos) anualizado
-    tracking_error = (portfolio_returns - benchmark_returns).std() * np.sqrt(252)
+    tracking_error = (port_ret - bench_ret).std() * np.sqrt(252)
     
-    # Alpha de Jensen (Asumiendo Beta)
-    cov_matrix = np.cov(portfolio_returns, benchmark_returns)
+    # Alpha de Jensen
+    cov_matrix = np.cov(port_ret, bench_ret)
     beta = cov_matrix[0, 1] / cov_matrix[1, 1]
     jensen_alpha = port_annual_return - (risk_free_rate + beta * (bench_annual_return - risk_free_rate))
 
     # 3. MÉTRICAS AJUSTADAS AL RIESGO
 
-    # Ratio Sortino (Penaliza solo la volatilidad negativa)
-    downside_returns = portfolio_returns[portfolio_returns < 0]
+    downside_returns = port_ret[port_ret < 0]
     downside_volatility = downside_returns.std() * np.sqrt(252)
     sortino_ratio = (port_annual_return - risk_free_rate) / downside_volatility if downside_volatility > 0 else np.nan
     
-    # Ratio Calmar (Retorno anualizado / Maximum Drawdown absoluto)
     calmar_ratio = port_annual_return / abs(mdd) if mdd != 0 else np.nan
     
-    # Ratio de Información (Retorno Activo / Tracking Error)
     information_ratio = active_return / tracking_error if tracking_error > 0 else np.nan
 
     return {
